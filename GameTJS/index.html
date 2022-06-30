@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+
+  <head> 
+  <script type="text/javascript" src="js/libs/jquery/jquery-2.1.4.min.js"></script>
+	<script type="text/javascript" src="js/libs/three/three.js"></script>
+	<script type="text/javascript" src="js/libs/three/MTLLoader.js"></script>
+	<script type="text/javascript" src="js/libs/three/OBJLoader.js"></script>
+  <link rel="stylesheet" type="text/css" href="estilos.css">
+	</head>
+
+  <body>
+    <h3 id="scoreBoard"></h3>
+    <div id="container"></div>
+    <script type="text/javascript">
+
+  console.clear();
+
+
+  // "constants"... 
+  var WIDTH = 700,
+      HEIGHT = 500,
+      VIEW_ANGLE = 45,
+      ASPECT = WIDTH / HEIGHT,
+      NEAR = 0.1,
+      FAR = 10000,
+      FIELD_WIDTH = 1200,
+      FIELD_LENGTH = 3000,
+      BALL_RADIUS = 20,
+      PADDLE_WIDTH = 200,
+      PADDLE_HEIGHT = 30,
+      
+      //get the scoreboard element.
+      scoreBoard = document.getElementById('scoreBoard'),
+      
+      //declare members.
+      container, mainLight,
+      scene, ball, paddle1, paddle2, field, running,
+      objetoCargado, 
+      mesa_style_001,
+      player1_soccer, player2_soccer,
+      score = {
+        player1: 0,
+        player2: 0
+      };
+
+      var renderers = [];
+	    var cameras = [];
+	    var players = [];
+
+  
+
+      const canvas = document.querySelector('#playerone');
+      const loader = new THREE.TextureLoader();
+      
+  $(document).ready(function() {
+    
+
+    //setupScene();
+
+    init();
+
+    
+    loadOBJWithMTL("assets/", "box.obj", "box.mtl", (objetoCargado) => {
+      objetoCargado.position.z = -4;
+      objetoCargado.scale.multiplyScalar(5);
+      scene.add(objetoCargado);
+      //ball.add(objetoCargado);
+
+    });
+
+    loadOBJWithMTL("assets/001_mes_style/", "001_mesa_styleNew.obj", "001_mesa_styleNew.mtl", (mesa_style_001) => {
+    mesa_style_001.position.y = -80;
+    mesa_style_001.scale.multiplyScalar(100);
+    mesa_style_001.rotation.y = Math.PI / 2;
+    scene.add(mesa_style_001);
+    });
+
+    loadOBJWithMTL("assets/006_player_soccer/", "Player_soccer.obj", "Player_soccer.mtl", (player1_soccer) => {
+    player1_soccer.position.y = -80;
+    player1_soccer.scale.multiplyScalar(100);
+    player1_soccer.rotation.y = Math.PI;
+    scene.add(player1_soccer);
+    paddle1.add(player1_soccer);
+    });
+
+    loadOBJWithMTL("assets/006_player_soccer/", "Player_soccer.obj", "Player_soccer.mtl", (player2_soccer) => {
+    player2_soccer.position.y = -80;
+    player2_soccer.scale.multiplyScalar(100);
+    //player2_soccer.rotation.y = Math.PI;
+    scene.add(player2_soccer);
+    paddle2.add(player2_soccer);
+    });
+
+    scene.background = loader.load( 'imagenes/01mountainsky.jpg' );
+
+    render();
+
+    //document.addEventListener('keydown', onKeyDown);
+    //document.addEventListener('keyup', onKeyUp);		
+  });
+
+  function loadOBJWithMTL(path, objFile, mtlFile, onLoadCallback) {
+		
+		var mtlLoader = new THREE.MTLLoader();
+		mtlLoader.setPath(path);
+		mtlLoader.load(mtlFile, (materialCargado) => {
+
+			//se ejecuta al terminar de cargar el mtl
+			var objLoader = new THREE.OBJLoader();
+			objLoader.setPath(path);
+			objLoader.setMaterials(materialCargado);
+
+			objLoader.load(objFile, (objCargado) => {
+
+				onLoadCallback(objCargado);
+
+			});
+
+		});
+	}
+      
+  
+  function startBallMovement() {
+    var direction = Math.random() > 0.5 ? -1 : 1;
+    ball.$velocity = {
+      x: 0,
+      z: direction * 20
+    };
+    ball.$stopped = false;
+  }
+  
+  function processCpuPaddle() {
+    var ballPos = ball.position,
+        cpuPos = paddle2.position;
+    
+    if(cpuPos.x - 100 > ballPos.x) {
+      cpuPos.x -= Math.min(cpuPos.x - ballPos.x, 6);
+    }else if(cpuPos.x - 100 < ballPos.x) {
+      cpuPos.x += Math.min(ballPos.x - cpuPos.x, 6);
+    }
+  }
+  
+  function processBallMovement() {
+    if(!ball.$velocity) {
+      startBallMovement();
+    }
+    
+    if(ball.$stopped) {
+      return;
+    }
+    
+    updateBallPosition();
+    
+    if(isSideCollision()) {
+      ball.$velocity.x *= -1; 
+    }
+    
+    if(isPaddle1Collision()) {
+      hitBallBack(paddle1);
+    }
+    
+    if(isPaddle2Collision()) {
+      hitBallBack(paddle2);
+    }
+    
+    if(isPastPaddle1()) {
+      scoreBy('player2');
+    }
+    
+    if(isPastPaddle2()) {
+      scoreBy('player1');
+    }
+
+    cameras[1].position.x = paddle2.position.x;
+    cameras[1].position.z = paddle2.position.z;  
+  }
+  
+  function isPastPaddle1() {
+    return ball.position.z > paddle1.position.z + 100;
+  }
+  
+  function isPastPaddle2() {
+    return ball.position.z < paddle2.position.z - 100;
+  }
+  
+  function updateBallPosition() {
+    var ballPos = ball.position;
+    
+    //update the ball's position.
+    ballPos.x += ball.$velocity.x;
+    ballPos.z += ball.$velocity.z;
+    
+    //Agregar arco
+    //ballPos.y = -((ballPos.z - 1) * (ballPos.z - 1) / 5000) + 435;
+
+  }
+  
+  function isSideCollision() {
+    var ballX = ball.position.x,
+        halfFieldWidth = FIELD_WIDTH / 2;
+    return ballX - BALL_RADIUS < -halfFieldWidth || ballX + BALL_RADIUS > halfFieldWidth;
+  }
+  
+  function hitBallBack(paddle) {
+    ball.$velocity.x = (ball.position.x - paddle.position.x) / 5; 
+    ball.$velocity.z *= -1;
+  }
+  
+  function isPaddle2Collision() {
+    return ball.position.z - BALL_RADIUS <= paddle2.position.z && 
+        isBallAlignedWithPaddle(paddle2);
+  }
+  
+  function isPaddle1Collision() {
+    return ball.position.z + BALL_RADIUS >= paddle1.position.z && 
+        isBallAlignedWithPaddle(paddle1);
+  }
+  
+  function isBallAlignedWithPaddle(paddle) {
+    var halfPaddleWidth = PADDLE_WIDTH / 2,
+        paddleX = paddle.position.x,
+        ballX = ball.position.x;
+    return ballX > paddleX - halfPaddleWidth && 
+        ballX < paddleX + halfPaddleWidth;
+  }
+  
+  function scoreBy(playerName) {
+      addPoint(playerName);
+      updateScoreBoard();
+      stopBall();
+      setTimeout(reset, 2000);
+  }
+  
+  function updateScoreBoard() {
+      scoreBoard.innerHTML = 'Player 1: ' + score.player1 + ' Player 2: ' + 
+        score.player2;
+  }
+  
+  function stopBall(){ 
+    ball.$stopped = true;
+  }
+  
+  function addPoint(playerName){
+    score[playerName]++;
+    console.log(score);
+  }
+  
+  function startRender(){
+    running = true;
+    render();  
+  }
+  
+  function stopRender() {
+    running = false;
+  }
+  
+  function render() {
+    if(running) {
+      requestAnimationFrame(render);
+      
+      processBallMovement();
+      processCpuPaddle();
+      
+      //renderer.render(scene, camera);
+      renderers[0].render(scene, cameras[0]);
+		  renderers[1].render(scene, cameras[1]);
+
+    }
+  }
+  
+  function reset() {
+    ball.position.set(0,0,0);
+    ball.$velocity = null;
+  }
+  
+  var visibleSize = { width: window.innerWidth, height: window.innerHeight};
+  function init() {
+
+    clock = new THREE.Clock();		
+		scene = new THREE.Scene();
+		
+		createCamera();
+		createCamera();
+
+		createRenderer(new THREE.Color(0,0,0));
+		createRenderer(new THREE.Color(0.2,0,0));
+
+    container = document.getElementById('container');
+    
+  
+    //renderer----------------------------------------------------------------
+    var visibleSize = { width: window.innerWidth, height: window.innerHeight};
+		clock = new THREE.Clock();		
+		scene = new THREE.Scene();
+
+		var ambientLight = new THREE.AmbientLight(new THREE.Color(1, 1, 1), 0.1);
+		scene.add(ambientLight);
+
+		var directionalLight = new THREE.DirectionalLight(new THREE.Color(1, 1, 1), 0.01);
+		directionalLight.position.set(0, 0, 1);
+		scene.add(directionalLight);
+
+
+
+
+    cameras[0] = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+    cameras[0].position.set(0, 300, FIELD_LENGTH / 2 + 600);
+
+    cameras[1] = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+    cameras[1].position.set(0, 300, FIELD_LENGTH / 2 + 600);
+    
+    //scene = new THREE.Scene();
+    scene.add(cameras[0]);
+    scene.add(cameras[1]);
+
+    
+    var fieldGeometry = new THREE.CubeGeometry(FIELD_WIDTH, 5, FIELD_LENGTH, 1, 1, 1),
+        fieldMaterial = new THREE.MeshLambertMaterial({ color: 0x003300 });
+
+    paddle1 = addPaddle();
+    paddle1.position.z = FIELD_LENGTH / 2;
+
+    paddle2 = addPaddle();
+    paddle2.position.z = -FIELD_LENGTH / 2;
+    
+    var ballGeometry = new THREE.SphereGeometry(BALL_RADIUS, 16, 16),
+        ballMaterial = new THREE.MeshLambertMaterial({ color: 0xCC0000 });
+
+        
+    ball = new THREE.Mesh(ballGeometry, ballMaterial);
+    
+    scene.add(ball);
+    ball.opacity = 0.5;
+
+    cameras[0].rotation.x = -0.174533;
+
+    
+    cameras[1].rotation.y = 3.14159;
+    //cameras[1].lookAt(0,0,0);
+
+    
+    mainLight = new THREE.HemisphereLight(0xFFFFFF, 0x003300);
+    scene.add(mainLight);
+    
+    //cameras[0].lookAt(ball.position);
+      
+    updateScoreBoard();
+    startRender();
+    
+    renderers[0].domElement.addEventListener('mousemove', containerMouseMove);
+    renderers[0].domElement.style.cursor = 'none';
+
+    $("#scene-section").append(renderers[0].domElement);
+		$("#scene-section-2").append(renderers[1].domElement);
+  }
+
+  function createCamera(){
+		var camera = new THREE.PerspectiveCamera(75, visibleSize.width / visibleSize.height, 0.1, 100);
+		cameras.push(camera);
+	}
+
+  function createRenderer(color) {
+		var renderer = new THREE.WebGLRenderer({precision: "mediump"
+    });
+    //precision: "mediump"
+    
+		//renderer.setClearColor(color);
+		renderer.setPixelRatio((visibleSize.width / 2) / visibleSize.height);
+		renderer.setSize((visibleSize.width / 2), visibleSize.height);
+
+		renderers.push(renderer);
+
+	}
+  
+  function addPaddle() {
+    var paddleGeometry = new THREE.CubeGeometry(PADDLE_WIDTH, PADDLE_HEIGHT, 10, 1, 1, 1),
+        paddleMaterial = new THREE.MeshLambertMaterial({ color: 0xCC0000, opacity: 0.5, transparent: true }),
+        paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
+    scene.add(paddle);
+    return paddle;
+  }
+  
+  function containerMouseMove(e) {
+    var mouseX = e.clientX;
+    cameras[0].position.x = paddle1.position.x = -((WIDTH - mouseX) / WIDTH * FIELD_WIDTH) + (FIELD_WIDTH / 2);
+
+  
+  
+  }
+  
+  //init();
+
+
+    </script>
+
+
+  <div style="display: flex; height: 100px;">
+
+    <div style="width: 50%;" id ="scene-section"></div>
+    <div style="flex-grow: 1;" id ="scene-section-2"></div>
+  
+  </div>
+
+
+  </body>
+
+
+
+</html>

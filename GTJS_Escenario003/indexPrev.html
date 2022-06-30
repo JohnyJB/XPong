@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html>
+
+  <head> 
+    <link rel="stylesheet" type="text/css" href="estilos.css">
+  <script type="text/javascript" src="js/libs/jquery/jquery-2.1.4.min.js"></script>
+	<script type="text/javascript" src="js/libs/three/three.js"></script>
+	<script type="text/javascript" src="js/libs/three/MTLLoader.js"></script>
+	<script type="text/javascript" src="js/libs/three/OBJLoader.js"></script>
+
+  <script src="js/bootstrap.min.js"></script>
+  <!-- libreria pa tablas-->
+  <script src="js/jquery.dataTables.min.js"></script>
+	<script src="js/dataTables.bootstrap.js"></script>
+
+
+
+	</head>
+
+  <body>
+    <h3 id="scoreBoard" class="frame"></h3>
+    <div id="container"></div>
+    <script type="text/javascript">
+
+  console.clear();
+
+
+  // "constants"... 
+  var WIDTH = 700,
+      HEIGHT = 500,
+      VIEW_ANGLE = 45,
+      ASPECT = WIDTH / HEIGHT,
+      NEAR = 0.1,
+      FAR = 10000,
+      FIELD_WIDTH = 3000,
+      FIELD_LENGTH = 3000,
+      BALL_RADIUS = 20,
+      PADDLE_WIDTH = 200,
+      PADDLE_HEIGHT = 30,
+      
+      //get the scoreboard element.
+      scoreBoard = document.getElementById('scoreBoard'),
+      
+      //declare members.
+      container, mainLight,
+      scene, ball, paddle1, paddle1Long, p1, paddle2, paddle2Long, p2, field, running,
+      balvelx = 0, balvelz = 0,
+      objetoCargado, 
+      mesa_style_001, mesa_fut_002,
+      player1name,
+      player1_soccer, player2_soccer,
+      ball_soccer, ball_brain, 
+      pawnrobot, tube, acup, rock, pawnMisteryCube = [],
+      miniwall1, miniwall2,
+      miniwall = [],
+      //objects
+      ufos = [], ufoscenter = [],
+      isWorldReady = false, deltaTime,
+      score = {
+        player1: 0,
+        player2: 0
+      },
+      keys = {},
+      //animation
+      frame = 0, rotationframe = 0, rotationframe2 = 0,
+      //eventos
+      Misterycubeselected = 0;
+      EvRobot = 0, EvRobotTime = 0, EvRobotChasing = false,
+      EvMoveTube = false,
+      EvLongPaddle = false, EvLongPaddleTime = 0,
+      EvFollowBall = false, EvFollowBallTime = 0,
+      EvSlowPaddle = false, EvSlowPaddleTime = 0, EvSlowPaddleRest = 0,
+      //Pausa
+      IsPaused = false, pprevx = 0, pprevz = 0, bprevx = 0, bprevz = 0,
+
+      //music
+      song = new Audio('music/the-hi-fives-welcome-to-my-mind.mp3');
+      var isaudioplaying = false;
+      
+
+      var renderers = [];
+	    var cameras = [];
+	    var players = [];
+
+  
+
+      const canvas = document.querySelector('#playerone');
+      const loader = new THREE.TextureLoader();
+
+      
+  $(document).on("ready", function(){
+    playsong();
+    //listar();
+
+  });   
+
+  $(document).ready(function() {
+    $("#btnlista").click(function() {
+      listar();
+      document.getElementById('btnlista').style.visibility = 'hidden';
+    });
+    document.getElementById('btncontinuar').style.visibility = 'hidden';
+    document.getElementById('btnsonido').style.visibility = 'hidden';
+    document.getElementById('txtwin').style.visibility = 'hidden';
+    document.getElementById('txtlost').style.visibility = 'hidden';
+    document.getElementById('btnreiniciar').style.visibility = 'hidden';
+        document.getElementById('btnName').style.visibility = 'hidden';
+    document.getElementById('nombre1').style.visibility = 'hidden';
+    document.getElementById('btnlista').style.visibility = 'hidden';
+    
+    $("#btncontinuar").click(function() {
+      IsPaused = false;
+      document.getElementById('btncontinuar').style.visibility = 'hidden';
+      document.getElementById('btnsonido').style.visibility = 'hidden';
+      //running = true;
+      //startRender();
+      //LoadBallVelocity();
+    });
+
+    $("#btnreiniciar").click(function() {
+      location.href = 'index.html';
+      
+      
+    });
+
+    $("#btnsonido").click(function() {
+      if (isaudioplaying){
+        stopsong();
+      } else {
+        playsong();
+      }
+    });
+
+    player1name = "Desconocido";
+    init();
+    
+
+    
+    scenario1();
+
+    render();
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);		
+  });
+
+  //PHP MOSTRAR LISTA ------------------------------------------------------------------------
+  var listar = function(){
+        var table = $("#dt_scores").DataTable({
+          "ajax":{
+            "method":"POST",
+            "url":"showscore.php"
+          },
+          "columns":[
+            //nombre de las columnas, recibe 2 columnas
+            {"data":"playername"},
+            {"data":"score"}
+          ],
+          "order": [[ 1, "desc" ]]
+        });
+
+      }
+  //-------------------------------------------------------------------------------------------
+
+  function loadOBJWithMTL(path, objFile, mtlFile, onLoadCallback) {
+		
+		var mtlLoader = new THREE.MTLLoader();
+		mtlLoader.setPath(path);
+		mtlLoader.load(mtlFile, (materialCargado) => {
+
+			//se ejecuta al terminar de cargar el mtl
+			var objLoader = new THREE.OBJLoader();
+			objLoader.setPath(path);
+			objLoader.setMaterials(materialCargado);
+
+			objLoader.load(objFile, (objCargado) => {
+
+				onLoadCallback(objCargado);
+
+			});
+
+		});
+	}
+
+  function playsong(){
+    song.play();
+    isaudioplaying = true;
+    
+  }
+
+  function stopsong(){
+    song.pause();
+    isaudioplaying = false;
+  }
+   
+  
+  
+  function startBallMovement() {
+    ball.position.x = paddle1.position.x;
+    ball.position.z = paddle1.position.z - 100;
+    var direction = Math.random() > 0.5 ? -1 : 1;
+    ball.$velocity = {
+      x: 0,
+      z: direction * 20
+    };
+    ball.$stopped = false;
+  }
+  
+  function processCpuRobot() {
+    var ballPos = paddle1.position,
+        cpuPos = pawnrobot.position;
+    
+    if(cpuPos.x - 10 > ballPos.x) {
+      cpuPos.x -= Math.min(cpuPos.x - ballPos.x, 2);
+    }else if(cpuPos.x - 10 < ballPos.x) {
+      cpuPos.x += Math.min(ballPos.x - cpuPos.x, 2);
+    }
+  }
+
+  function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+  }
+
+  function onKeyDown(event) {
+		keys[String.fromCharCode(event.keyCode)] = true;
+	}
+	function onKeyUp(event) {
+		keys[String.fromCharCode(event.keyCode)] = false;
+	}
+  
+  function processBallMovement() {
+    if(!ball.$velocity) {
+      startBallMovement();
+    } 
+    
+    if(ball.$stopped) {
+      ball.position.x = paddle1.position.x;
+      ball.position.z = paddle1.position.z;
+      return;
+    }
+    
+    if (!IsPaused){
+    updateBallPosition();
+    }
+    
+    if(isSideCollision()) {
+      ball.$velocity.x *= -1; 
+    }
+    
+    if(isPaddle1Collision()) {
+      hitBallBack(paddle1);
+    }
+    
+    if(isPaddle2Collision()) {
+      //hitBallBack(paddle2);
+    }
+
+    if(isPaddleBackWallCollision001()) {
+      //ball.$velocity.x = (ball.position.x - paddle1.position.x) / 80; 
+      ball.$velocity.z *= -1;
+    }
+
+        //if(isminiwall1Collision()) {
+    var colisionwall = false;
+    for (var i = 0; i < miniwall.length; i++) { 
+      if ( isminiwallCollision(miniwall[i]) ) {
+        colisionwall = true;
+      }
+    }
+    if (colisionwall){
+      ball.$velocity.z *= -1;
+    }
+
+
+    //if(isminiwall2Collision()) {
+      //ball.$velocity.z *= -1;
+    //}
+
+  
+    
+    if(isPastPaddle1()) {
+      scoreBy('player2');
+    }
+    
+    if(isPastPaddle2()) {
+      //scoreBy('player1');
+    }
+
+    //Llega al tubo
+    if(isPastTube()) {
+      //ball.position.x = paddle1.position.x;
+      //ball.position.z = paddle1.position.z - 100;
+      scoreBy('player1');
+      tube.position.x = getRandomInt(-1000, 1000);
+      tube.position.z = getRandomInt(-800, 800);
+
+      var walls = 0;
+      if (score.player1 > 20) { walls = miniwall.length}
+      else if (score.player1 > 18) { walls = 16}
+      else if (score.player1 > 15) { walls = 12}
+      else if (score.player1 > 8) { walls = 10}
+      else if (score.player1 > 7) { walls = 8}
+      else if (score.player1 > 6) { walls = 6}
+      else if (score.player1 > 4) { walls = 4}
+      else if (score.player1 >= 0) { walls = 2}
+
+
+      for (var i = 0; i < walls; i++) { 
+        miniwall[i].position.x = getRandomInt(-1300, 1300);
+        miniwall[i].position.z = getRandomInt(-1000, 800);
+        miniwall[i].position.y = 0;
+      }
+
+      //Colocar Mistery Cube
+      for (var i = 0; i < 4; i++) {
+      
+      pawnMisteryCube[i].position.x = 0;
+      pawnMisteryCube[i].position.z = -1400;
+      pawnMisteryCube[i].position.y = -300;
+      }
+
+      var showcube = getRandomInt(0, 5);
+      if (showcube < 3){
+      Misterycubeselected = getRandomInt(0, 4);
+      pawnMisteryCube[Misterycubeselected].position.x = getRandomInt(-1000, 1000);
+      pawnMisteryCube[Misterycubeselected].position.z = getRandomInt(-900, 900);
+      pawnMisteryCube[Misterycubeselected].position.y = 50;
+      }
+
+      var showenemy = getRandomInt(0, 10);
+      if (showenemy > 9){
+        EvRobot = 1;
+      } if (showenemy > 8){
+        EvRobot = 2;
+      }
+
+
+      //pawnMisteryCube.position.z = -1400;
+      //pawnMisteryCube.position.y = -300;
+
+    }
+
+    
+
+    if(isPastMisteryBox()) {
+      //ball.position.x = paddle1.position.x;
+      //ball.position.z = paddle1.position.z - 100;
+      if (Misterycubeselected == 0){
+      selectevent = getRandomInt(-2, 2);
+      if (selectevent < 0){EvLongPaddle = true;}
+      if (selectevent == 0){EvFollowBall = true;}
+      if (selectevent > 0){EvSlowPaddle = true;}
+      } else if (Misterycubeselected == 1){
+      EvLongPaddle = true;
+      } else if (Misterycubeselected == 2){
+      EvFollowBall = true;
+      } else if (Misterycubeselected == 3){
+      EvSlowPaddle = true;
+      }
+      
+      pawnMisteryCube[Misterycubeselected].position.z = -1400;
+      pawnMisteryCube[Misterycubeselected].position.y = -300;
+
+    }
+
+
+
+    
+
+    cameras[1].position.x = paddle2.position.x;
+    cameras[1].position.z = paddle2.position.z;  
+  }
+
+  function winning(){
+
+  }
+  
+  function isPastPaddle1() {
+    return ball.position.z > paddle1.position.z + 100;
+  }
+  
+  function isPastPaddle2() {
+    return ball.position.z < paddle2.position.z - 100;
+  }
+
+  function isPastTube() {
+    return ((ball.position.z < tube.position.z + 100) && (ball.position.z > tube.position.z - 100) && (ball.position.x < tube.position.x + 100) && (ball.position.x > tube.position.x - 100));
+  }
+
+  function isPastMisteryBox() {
+    return ((ball.position.z < pawnMisteryCube[Misterycubeselected].position.z + 90) && (ball.position.z > pawnMisteryCube[Misterycubeselected].position.z - 90) && (ball.position.x < pawnMisteryCube[Misterycubeselected].position.x + 90) && (ball.position.x > pawnMisteryCube[Misterycubeselected].position.x - 90));
+  }
+  
+  function updateBallPosition() {
+    var ballPos = ball.position;
+    
+    //update the ball's position.
+    ballPos.x += ball.$velocity.x;
+    ballPos.z += ball.$velocity.z;
+    
+    //Agregar arco
+    //ballPos.y = -((ballPos.z - 1) * (ballPos.z - 1) / 5000) + 435;
+
+  }
+  //Events-------------------------------------------------------------------------------------------------------------------------------
+  function EventLongPaddle() {
+    //EvLongPaddle = true;
+    paddle1Long.position.z = +1000;
+    if (EvLongPaddleTime > 2000){
+      EvLongPaddleTime = 0;
+      EvLongPaddle = false;
+      
+
+    } else if (EvLongPaddle) {
+      paddle1Long.position.z = -0;
+      EvLongPaddleTime += 1;
+    }
+
+  }
+
+  function EventFollowBall() {
+    //EvLongPaddle = true;
+    if (EvFollowBallTime > 1000){
+      EvFollowBallTime = 0;
+      EvFollowBall = false;
+      
+
+    } else if (EvFollowBall) {
+      ball.position.x = paddle1.position.x;
+      EvFollowBallTime += 1;
+    }
+
+  }
+
+  function EventSlowPaddle() {
+    //EvLongPaddle = true;
+    if (EvSlowPaddleTime > 600){
+      EvSlowPaddleRest = 0;
+      EvSlowPaddleTime = 0;
+      EvSlowPaddle = false;
+      
+
+    } else if (EvSlowPaddle) {
+      EvSlowPaddleRest = 600;
+      EvSlowPaddleTime += 1;
+    }
+
+  }
+
+  function EventRobot() {
+    //EvLongPaddle = true;
+    if (EvRobotTime > 900){
+      pawnrobot.position.x = 0;
+      pawnrobot.position.y = -400;
+      pawnrobot.position.z = -1400;
+      pawnrobot.rotation.z = 0;
+      EvRobotTime = 0;
+      EvRobot = 0;
+      
+
+    } else if (EvRobot > 0) {
+      if (EvRobotTime == 0 && EvRobot == 1){
+        pawnrobot.position.x = 1000;
+        pawnrobot.position.y = 100;
+        pawnrobot.position.z = 0;
+        //EvRobotChasing = false;
+      } else if (EvRobotTime == 0 && EvRobot == 2){
+        pawnrobot.position.x = -1000;
+        pawnrobot.position.y = 100;
+        pawnrobot.position.z = 0;
+        //EvRobotChasing = false;
+      }
+
+      if (EvRobotChasing){
+        processCpuRobot();
+        pawnrobot.position.z += 4;
+        pawnrobot.rotation.x = rotationframe;
+        if (pawnrobot.position.z > (paddle1.position.z - 10) && pawnrobot.position.z < (paddle1.position.z + 10)){
+          if (pawnrobot.position.x > (paddle1.position.x - 100) && pawnrobot.position.x < (paddle1.position.x + 100 && (!EvLongPaddle) )){
+            //score.player2 += 1;
+          scoreBy('player2');
+          } else if (pawnrobot.position.x > (paddle1.position.x - 175) && pawnrobot.position.x < (paddle1.position.x + 175 && (!EvLongPaddle) )){
+            scoreBy('player2');
+          }
+        }
+
+
+      } else {
+      pawnrobot.rotation.z = rotationframe;
+      if (EvRobot == 1) {pawnrobot.position.x -= 1; }
+      if (EvRobot == 2) {pawnrobot.position.x += 1; }
+      EvRobotTime += 1;
+      if (pawnrobot.position.x > (paddle1.position.x - 20) && pawnrobot.position.x < (paddle1.position.x + 20)){
+        EvRobotChasing = true;
+        EvRobotTime = 1;
+      }
+      }
+
+    }
+
+  }
+
+  //ball and paddles------------------------------------------------------------------------------------
+  function isSideCollision() {
+    var ballX = ball.position.x,
+        halfFieldWidth = FIELD_WIDTH / 2;
+    return ballX - BALL_RADIUS < -halfFieldWidth || ballX + BALL_RADIUS > halfFieldWidth;
+  }
+  
+  function hitBallBack(paddle) {
+    ball.$velocity.x = (ball.position.x - paddle.position.x) / 8; 
+    ball.$velocity.z *= -1;
+  }
+
+  function saveBallVelocity() {
+    balvelx = ball.$velocity.x; 
+    balvelz = ball.$velocity.z;
+  }
+  function LoadBallVelocity() {
+    ball.$velocity.x = balvelx; 
+    ball.$velocity.z = balvelz;
+  }
+  
+  function isPaddle2Collision() {
+    return ball.position.z - BALL_RADIUS <= paddle2.position.z && 
+        isBallAlignedWithPaddle(paddle2);
+  }
+  
+  function isPaddle1Collision() {
+    return ball.position.z + BALL_RADIUS >= paddle1.position.z && 
+        isBallAlignedWithPaddle(paddle1);
+  }
+
+
+  
+  function isBallAlignedWithPaddle(paddle) {
+    var halfPaddleWidth = PADDLE_WIDTH / 2,
+        paddleX = paddle.position.x,
+        ballX = ball.position.x;
+    if (EvLongPaddle){
+      halfPaddleWidth = ((PADDLE_WIDTH + 350) / 2)
+      return ballX > paddleX - halfPaddleWidth && 
+        ballX < paddleX + halfPaddleWidth;
+
+    } else {
+    return ballX > paddleX - halfPaddleWidth && 
+        ballX < paddleX + halfPaddleWidth;
+    }
+  }
+
+  function isBallAlignedWithPaddlewall(paddle) {
+    var halfPaddleWidth = PADDLE_WIDTH / 2,
+        paddleX = paddle.position.x,
+        ballX = ball.position.x;
+    
+    return ballX > paddleX - halfPaddleWidth && 
+        ballX < paddleX + halfPaddleWidth;
+    
+  }
+
+  function isPaddleBackWallCollision001() {
+    return ball.position.z - BALL_RADIUS <= -900 && 
+        isBallAlignedWithBackWall001(paddle1);
+  }
+
+  function isBallAlignedWithBackWall001(paddle) {
+    var halfPaddleWidth = 1500,
+        paddleX = 0,
+        ballX = ball.position.x;
+    return ballX > paddleX - halfPaddleWidth && 
+        ballX < paddleX + halfPaddleWidth;
+  }
+
+  //miniwalls
+  function isminiwallCollision(vminiwall){
+    return ball.position.z - BALL_RADIUS <= vminiwall.position.z && ball.position.z + BALL_RADIUS >= vminiwall.position.z && isBallAlignedWithPaddlewall(vminiwall);
+  }
+
+  function isBallAlignedWithMinikWall1() {
+    var halfPaddleWidth = miniwall1.position.x,
+        paddleX = 0,
+        ballX = ball.position.x;
+    return ballX > paddleX - halfPaddleWidth && 
+        ballX < paddleX + halfPaddleWidth;
+  }
+
+  function isBallAlignedWithMinikWall2() {
+    var halfPaddleWidth = miniwall1.position.x,
+        paddleX = 0,
+        ballX = ball.position.x;
+    return ballX > paddleX - halfPaddleWidth && 
+        ballX < paddleX + halfPaddleWidth;
+  }
+  
+  function scoreBy(playerName) {
+      addPoint(playerName);
+      updateScoreBoard();
+      stopBall();
+      setTimeout(reset, 2000);
+      if (score.player2 == 3){
+        document.getElementById('txtlost').style.visibility = 'visible';
+        document.getElementById('btnreiniciar').style.visibility = 'visible';
+        IsPaused = true;
+        sendscore();
+        
+      }
+
+      if (score.player1 == 15){
+        win();
+        sendscore();
+        
+      }
+      
+      
+      
+  }
+  
+  function updateScoreBoard() {
+      //player1name = $("#nombre1").val();
+      player1name = localStorage.getItem('nombre')
+      scoreBoard.innerHTML = 'Nombre: ' + player1name + ' Puntos: ' + score.player1 + ' Vidas: ' +  (3 - score.player2);
+      //localStorage.setItem('nombre', player1name);
+      //localStorage.setItem('vidas', score.player2);
+      //localStorage.setItem('puntos', score.player1); 	
+      
+  }
+  
+  function stopBall(){ 
+    ball.$stopped = true;
+  }
+  
+  function addPoint(playerName){
+    score[playerName]++;
+    console.log(score);
+  }
+  
+  function startRender(){
+    running = true;
+    render();  
+  }
+  
+  function stopRender() {
+    running = false;
+  }
+
+  function runframes(){
+      rotationframe += Math.PI / 200;
+      if (rotationframe >= (2*Math.PI)){
+        rotationframe = 0;
+      }
+
+      rotationframe2 += Math.PI / 2000;
+      if (rotationframe2 >= (2*Math.PI)){
+        rotationframe2 = 0;
+      }
+
+
+  }
+  function animations(){
+        //Hoyo
+        tube.rotation.y = rotationframe;
+        //Jugador 1
+        //p1.rotation.y = rotationframe;
+
+        //Platillo fondo
+        p2.rotation.y = rotationframe;
+        paddle2.position.y = -40;
+        paddle2.position.z = 0;
+        paddle2.rotation.z = rotationframe2;
+        paddle2.rotation.x = rotationframe2;
+
+        //p2.rotation.z = -rotationframe2;
+        p2.position.x = 1200;
+        
+        for (var i = 0; i < ufos.length; i++) { 
+        ufos[i].rotation.y = rotationframe;
+        ufoscenter[i].position.y = -40;
+        ufoscenter[i].position.z = 0;
+        ufoscenter[i].rotation.z = rotationframe2 + Math.PI /6;
+        ufoscenter[i].rotation.x = rotationframe2 + (Math.PI /3) * i;
+        ufoscenter[i].rotation.y = (Math.PI /3) * i;
+        ufos[i].position.x = 1200;
+        }
+
+        //MisteryCube
+        pawnMisteryCube[Misterycubeselected].rotation.y = rotationframe2;
+        pawnMisteryCube[Misterycubeselected].rotation.z = rotationframe2;
+
+        //camera
+        cameras[0].rotation.z = rotationframe2;
+
+
+  }
+  
+  function render() {
+    
+    if(running) {
+
+      if (!IsPaused){
+      runframes();
+      animations();
+      EventLongPaddle();
+      EventFollowBall();
+      EventSlowPaddle();
+      EventRobot();
+      }
+
+
+      requestAnimationFrame(render);
+
+      deltaTime = clock.getDelta();
+
+      var xaw = 0;
+      if (keys["A"]) {
+        //playsong();
+			  xaw = -800 + EvSlowPaddleRest;
+		  } else if (keys["D"]) {
+        //playsong();
+			  xaw = 800 - EvSlowPaddleRest;
+		  } else {
+        p1.rotation.z = 0;
+      }
+      if (keys["E"]) {
+          IsPaused = true; 
+
+        //if (running) {
+        //saveBallVelocity();
+        document.getElementById('btncontinuar').style.visibility = 'visible';
+        document.getElementById('btnsonido').style.visibility = 'visible';
+        //stopRender();
+        //} else {
+          //running = true;
+        //}
+		  }
+
+      //pausa
+      
+
+      if (paddle1.position.x > ((FIELD_WIDTH / 2) - 101)){
+      paddle1.position.x = ((FIELD_WIDTH / 2) - 101);
+    } 
+
+    if (paddle1.position.x < -((FIELD_WIDTH / 2) + 101)){
+      paddle1.position.x = -((FIELD_WIDTH / 2) + 101);
+    } 
+      
+      if (isWorldReady && !IsPaused) {
+        
+        paddle1.position.x += xaw * deltaTime;
+        if (xaw > 0){
+          p1.rotation.z = -Math.PI / 10;
+        } else if (xaw < 0) {
+          p1.rotation.z = Math.PI / 10;
+        }
+        
+		  }
+
+      updateScoreBoard();
+      //player1name = $("#nombre1").val();
+      processBallMovement();
+      
+      //processCpuPaddle();
+      
+      //renderer.render(scene, camera);
+      renderers[0].render(scene, cameras[0]);
+		  renderers[1].render(scene, cameras[1]);
+      
+
+    }
+
+  }
+
+  function win(){
+    IsPaused = true;
+    document.getElementById('txtwin').style.visibility = 'visible';
+    document.getElementById('btnreiniciar').style.visibility = 'visible';
+
+
+  }
+  
+  function reset() {
+    ball.position.set(0,0,0);
+    ball.$velocity = null;
+  }
+  
+  var visibleSize = { width: window.innerWidth, height: window.innerHeight};
+  function init() {
+
+    clock = new THREE.Clock();		
+		scene = new THREE.Scene();
+		
+		createCamera();
+		createCamera();
+
+		createRenderer(new THREE.Color(0,0,0));
+		createRenderer(new THREE.Color(0.2,0,0));
+
+    container = document.getElementById('container');
+    
+  
+    //renderer-------------------------------------------------------------------------------------------------------------------------
+    var visibleSize = { width: window.innerWidth, height: window.innerHeight};
+		clock = new THREE.Clock();		
+		scene = new THREE.Scene();
+
+		var ambientLight = new THREE.AmbientLight(new THREE.Color(1, 1, 1), 0.1);
+		scene.add(ambientLight);
+
+		var directionalLight = new THREE.DirectionalLight(new THREE.Color(1, 1, 1), 0.01);
+		directionalLight.position.set(0, 0, 1);
+		scene.add(directionalLight);
+
+    cameras[0] = new THREE.PerspectiveCamera(50, ASPECT, NEAR, FAR);
+    cameras[0].rotation.x = -Math.PI / 7;
+    cameras[0].position.set(0, 800, 900);
+ 
+    cameras[1] = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+    cameras[1].position.set(0, 300, FIELD_LENGTH / 2);
+    cameras[1].rotation.y = Math.PI;
+    
+    //scene = new THREE.Scene();
+    scene.add(cameras[0]);
+    scene.add(cameras[1]);
+
+    //Objetos
+    var fieldGeometry = new THREE.CubeGeometry(FIELD_WIDTH, 5, FIELD_LENGTH, 1, 1, 1),
+        fieldMaterial = new THREE.MeshLambertMaterial({ color: 0x003300 });
+
+    paddle1 = addPaddle();
+    paddle1.position.z = FIELD_LENGTH / 2;
+    p1 = addminicube();
+    paddle1.add(p1);
+    paddle1.add(cameras[0]);
+
+    paddle1Long = addLongPaddle();
+    //paddle1Long.position.z = -3000;
+    paddle1.add(paddle1Long);
+
+    //paddle2 = addPaddle();
+    paddle2 = addminicubeInvisible();
+    paddle2.position.z = -FIELD_LENGTH / 2;
+    p2 = addminicube();
+    paddle2.add(p2);
+    paddle2.add(cameras[1]);
+
+    
+    
+    //Pelota
+    var ballGeometry = new THREE.SphereGeometry(BALL_RADIUS, 1, 1),
+        ballMaterial = new THREE.MeshLambertMaterial({ color: 0xCC0000 });   
+    ball = new THREE.Mesh(ballGeometry, ballMaterial);
+    scene.add(ball);
+    ball.opacity = 0.5;
+
+    //Robot Enemy Pawn
+    pawnrobot = addminicube();
+    pawnrobot.position.z = -1400;
+    pawnrobot.position.y = -300;
+    
+
+    //Tubo
+    tube = new THREE.Mesh(ballGeometry, new THREE.MeshLambertMaterial({ color: 0x005300 }));
+    scene.add(tube);
+    tube.opacity = 0.5;
+    tube.position.x = 300;
+    
+
+    //MisteryCube
+    for (var i = 0; i < 4; i++) {
+    pawnMisteryCube[i] = new THREE.Mesh(ballGeometry, new THREE.MeshLambertMaterial({ color: 0x005300 }));
+    scene.add(pawnMisteryCube[i]);
+    pawnMisteryCube[i].opacity = 0.5;
+    pawnMisteryCube[i].position.x = 0;
+    pawnMisteryCube[i].position.z = -1400;
+    pawnMisteryCube[i].position.y = -300;
+    }
+
+
+    //creando cubos
+    miniwall[0] = addminicube();
+    miniwall[0].position.x = -500;
+    miniwall[1] = addminicube();
+    miniwall[1].position.x = 500;
+
+    for (var i = 2; i < 20; i++) { 
+        miniwall[i] = addminicube();
+        miniwall[i].position.z = -1400;
+        miniwall[i].position.y = -300;
+        //miniwall[i].position.y = 100;
+    }
+
+    for (var i = 0; i < 4; i++) { 
+        ufos[i] = addminicube();
+        ufos[i].position.z = 0;
+        ufos[i].position.y = 0;
+
+        ufoscenter[i] = addminicube();
+        ufoscenter[i].position.z = -1200;
+        ufoscenter[i].position.y = 200;
+        ufoscenter[i].add(ufos[i]);
+        
+    }
+
+    //cameras[1].lookAt(0,0,0);
+
+    
+    mainLight = new THREE.HemisphereLight(0xFFFFFF, 0x003300);
+    scene.add(mainLight);
+    
+    //cameras[0].lookAt(ball.position);
+      
+    updateScoreBoard();
+    startRender();
+    
+    //renderers[0].domElement.addEventListener('mousemove', containerMouseMove);
+    renderers[0].domElement.style.cursor = 'none';
+
+    $("#scene-section").append(renderers[0].domElement);
+		$("#scene-section-2").append(renderers[1].domElement);
+  }
+
+  function scenario1(){
+
+    loadOBJWithMTL("assets/00_Balls/", "004_ball_metal.obj", "004_ball_metal.mtl", (ball_brain) => {
+      ball_brain.position.z = -4;
+      ball_brain.scale.multiplyScalar(30);
+      scene.add(ball_brain);
+      ball.add(ball_brain);
+
+    });
+
+    loadOBJWithMTL("assets/004_Mesa_madera/", "mesa3.obj", "mesa3.mtl", (mesa_style_001) => {
+      mesa_style_001.position.x = -50;
+      mesa_style_001.position.y = -50;
+      mesa_style_001.scale.multiplyScalar(100);
+      mesa_style_001.rotation.y = Math.PI / 2;
+    scene.add(mesa_style_001);
+    });
+
+    loadOBJWithMTL("assets/007_players/", "GloveNew.obj", "GloveNew.mtl", (player1_soccer) => {
+    player1_soccer.position.y = -80;
+    player1_soccer.scale.multiplyScalar(100);
+    player1_soccer.rotation.y = Math.PI;
+
+    player2_soccer = player1_soccer.clone();
+    player2_soccer.position.y = 0;
+    player2_soccer.scale.multiplyScalar(0.30);
+
+    ufoarr = [];
+
+    for (var i = 0; i < ufos.length; i++) { 
+      ufoarr[i] = player2_soccer.clone();
+        scene.add(ufoarr[i]);
+        ufos[i].add(ufoarr[i]);
+
+    }
+
+    scene.add(player1_soccer);
+    scene.add(player2_soccer);
+    p1.add(player1_soccer);
+    p2.add(player2_soccer);
+    });
+
+
+    //Extra object
+    loadOBJWithMTL("assets/008_objects/", "RobotCircleNew.obj", "RobotCircleNew.mtl", (robot) => {
+      robot.position.y = -40;
+      robot.position.x = 0;
+      //robot.position.z = -500;
+      robot.scale.multiplyScalar(80);
+      //robot.rotation.y = - Math.PI;
+      scene.add(robot);
+      pawnrobot.add(robot);
+    });
+
+    loadOBJWithMTL("assets/008_objects/", "TubeNew4.obj", "TubeNew4.mtl", (tubeobj) => {
+      tubeobj.position.y = -80;
+      tubeobj.position.z = 0;
+      tubeobj.scale.multiplyScalar(80);
+      //robot.rotation.y = - Math.PI;
+    scene.add(tubeobj);
+    tube.add(tubeobj);
+    
+    });
+
+    loadOBJWithMTL("assets/008_objects/", "MisteryCubeNew.obj", "MisteryCubeNew.mtl", (mcube) => {
+      mcube.position.y = 0;
+      mcube.position.z = 0;
+      mcube.scale.multiplyScalar(60);
+      //robot.rotation.y = - Math.PI;
+    scene.add(mcube);
+    pawnMisteryCube[0].add(mcube);
+    
+    });
+    loadOBJWithMTL("assets/008_objects/", "MisteryCubeNew.obj", "MisteryCubeNew1.mtl", (mcube) => {
+      mcube.position.y = 0;
+      mcube.position.z = 0;
+      mcube.scale.multiplyScalar(60);
+      //robot.rotation.y = - Math.PI;
+    scene.add(mcube);
+    pawnMisteryCube[1].add(mcube);
+    
+    });
+    loadOBJWithMTL("assets/008_objects/", "MisteryCubeNew.obj", "MisteryCubeNew2.mtl", (mcube) => {
+      mcube.position.y = 0;
+      mcube.position.z = 0;
+      mcube.scale.multiplyScalar(60);
+      //robot.rotation.y = - Math.PI;
+    scene.add(mcube);
+    pawnMisteryCube[2].add(mcube);
+    
+    });
+    loadOBJWithMTL("assets/008_objects/", "MisteryCubeNew.obj", "MisteryCubeNew3.mtl", (mcube) => {
+      mcube.position.y = 0;
+      mcube.position.z = 0;
+      mcube.scale.multiplyScalar(60);
+      //robot.rotation.y = - Math.PI;
+    scene.add(mcube);
+    pawnMisteryCube[3].add(mcube);
+    
+    });
+
+    loadOBJWithMTL("assets/008_objects/", "RockIceNew.obj", "RockIceNew.mtl", (acup) => {
+      //acup.position.y = 500;
+      acup.position.y = -30;
+      acup.scale.multiplyScalar(50);
+      //acup.rotation.y = - Math.PI / 2;
+    acuparr = [];
+
+    for (var i = 0; i < miniwall.length; i++) { 
+        acuparr[i] = acup.clone();
+        scene.add(acuparr[i]);
+        miniwall[i].add(acuparr[i]);
+    }
+
+    });
+
+    isWorldReady = true;
+
+    scene.background = loader.load( 'imagenes/Back02.jpg' );
+
+
+
+
+  }
+
+
+
+
+
+
+
+  function createCamera(){
+		var camera = new THREE.PerspectiveCamera(75, visibleSize.width / visibleSize.height, 0.1, 100);
+		cameras.push(camera);
+	}
+
+  function createRenderer(color) {
+		var renderer = new THREE.WebGLRenderer({precision: "mediump"
+    });
+    //precision: "mediump"
+    
+		//renderer.setClearColor(color);
+		//renderer.setPixelRatio((visibleSize.width / 2) / visibleSize.height);
+		//renderer.setSize((visibleSize.width / 2), visibleSize.height);
+
+    renderer.setPixelRatio((visibleSize.width) / visibleSize.height);
+		renderer.setSize((visibleSize.width), visibleSize.height);
+		renderers.push(renderer);
+
+	}
+  
+  function addPaddle() {
+    var paddleGeometry = new THREE.CubeGeometry(PADDLE_WIDTH, PADDLE_HEIGHT, 10, 1, 1, 1),
+        paddleMaterial = new THREE.MeshLambertMaterial({ color: 0x2289cb, opacity: 0.5, transparent: true }),
+        paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
+    scene.add(paddle);
+    return paddle;
+  }
+
+  function addLongPaddle() {
+    var paddleGeometry = new THREE.CubeGeometry(PADDLE_WIDTH + 350, PADDLE_HEIGHT, 10, 1, 1, 1),
+        paddleMaterial = new THREE.MeshLambertMaterial({ color: 0x02ff14, opacity: 0.5, transparent: true }),
+        paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
+    scene.add(paddle);
+    return paddle;
+  }
+
+  function addminicube() {
+    var paddleGeometry = new THREE.CubeGeometry(1, 1, 1, 1, 1, 1),
+        paddleMaterial = new THREE.MeshLambertMaterial({ color: 0xCC0000, opacity: 0.5, transparent: true }),
+        minicube = new THREE.Mesh(paddleGeometry, paddleMaterial);
+    scene.add(minicube);
+    return minicube;
+  }
+
+  function addminicubeInvisible() {
+    var paddleGeometry = new THREE.CubeGeometry(1, 1, 1, 1, 1, 1),
+        paddleMaterial = new THREE.MeshLambertMaterial({ color: 0xCC0000, opacity: 0.0, transparent: true }),
+        minicube = new THREE.Mesh(paddleGeometry, paddleMaterial);
+    scene.add(minicube);
+    return minicube;
+  }
+  
+  function containerMouseMove(e) {
+    var mouseX = e.clientX;
+    //paddle1.position.x = -((WIDTH - mouseX) / WIDTH * FIELD_WIDTH) + (FIELD_WIDTH / 2);
+
+    var xaw = 0;
+    if ((-((WIDTH - mouseX) / WIDTH * FIELD_WIDTH) + (FIELD_WIDTH / 2)) > 0){
+      xaw = 15000;
+    } else if ((-((WIDTH - mouseX) / WIDTH * FIELD_WIDTH) + (FIELD_WIDTH / 2)) < 0){
+      xaw = -15000;
+    } else {
+        p1.rotation.z = 0;
+    }
+
+    if (paddle1.position.x > ((FIELD_WIDTH / 2) - 60)){
+      paddle1.position.x = ((FIELD_WIDTH / 2) - 60);
+    } 
+
+    if (paddle1.position.x < -((FIELD_WIDTH / 2) + 60)){
+      paddle1.position.x = -((FIELD_WIDTH / 2) + 60);
+    } 
+
+
+      if (isWorldReady) {
+        
+        paddle1.position.x += xaw * deltaTime;
+        if (xaw > 0){
+          p1.rotation.z = Math.PI / 10;
+        } else if (xaw < 0) {
+          p1.rotation.z = -Math.PI / 10;
+        }
+        p1.rotation.y = rotationframe;
+		  }
+
+    playsong();
+
+  }
+
+  //PHP Database-------------------------------------------------
+  function sendscore(){
+    
+   
+    let datos = new FormData();
+        datos.append("usuario", player1name);
+        datos.append("password", score.player1);
+        fetch('setscore.php', {
+                method: 'POST',
+                body: datos
+            }).then(Response => Response.json())
+            .then(({ success }) => {
+                if (success === 1) {
+                    //location.href = 'index.html';
+                } else {
+                    //alerta();
+                    location.href = 'index.html';
+                }
+            });
+            
+            
+
+  }
+
+  function lost(){
+
+
+  }
+  //----------------------------------------------------------
+
+  
+  
+  //init();
+
+
+  </script>
+  <div id="principal"  class="frame oculto"></div>
+
+      <button id="btnName">Elegir nombre</button>
+      <input id="nombre1" type="text"  placeholder="Nombre/Apodo..."> 
+      <button id="btnlista">Lista de Puntos</button>
+      <br>
+      <button id="btnsonido" style = "position: absolute; display: block; z-index: 99; left: 0%; top: 45%;" class="frame">SONIDO</button>
+      <button id="btncontinuar" style = "position: absolute; display: block; z-index: 99; left: 0%; top: 50%;" class="frame">CONTINUAR</button>
+      <!--<input id="ph" type="text"  placeholder="Escribe aqui para jugar W D">-->
+
+      <table id="dt_scores"class="table table-bordered table-hover" cellspacing="0" width="100%">
+      <h3 id="txtwin" style = "position: absolute; display: block; z-index: 99; left: 0%; top: 30%;" class="frame">FELICIDADES</h3>
+      <h3 id="txtlost" style = "position: absolute; display: block; z-index: 99; left: 0%; top: 30%;" class="frame">GAME OVER</h3>
+      <button id="btnreiniciar" style = "position: absolute; display: block; z-index: 99; left: 0%; top: 50%;" class="frame">REINICIAR</button>
+
+        
+      <tbody>
+          <tr>
+              <td></td>
+              <td></td>
+          </tr>
+      </tbody>
+      
+      </table>
+      
+
+  <div style="display: flex; height: 100px;">
+    
+
+    <div style="width: 50%;" id ="scene-section"></div>
+  
+  </div>
+</div>
+    
+
+
+
+  </body>
+
+
+
+</html>

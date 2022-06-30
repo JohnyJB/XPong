@@ -1,0 +1,324 @@
+newmtl Aang_rig_v010:acacthltycli
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 0.00
+newmtl Aang_rig_v010:adrbjvbaosqd
+illum 4
+Kd 0.75 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Aang_rig_v010:eomnaahdvorw
+illum 4
+Kd 0.17 0.03 0.03
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Aang_rig_v010:hckokpjdxibn
+illum 4
+Kd 0.06 0.04 0.03
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Aang_rig_v010:lambert22SG
+illum 4
+Kd 0.19 0.11 0.05
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Aang_rig_v010:lhwosptkjgan
+illum 4
+Kd 0.97 0.62 0.18
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Aang_rig_v010:mcvwuvbbqtvn
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd eyeColor_Map.jpg
+Ni 1.00
+newmtl Aang_rig_v010:panctflxudkg
+illum 4
+Kd 1.00 1.00 1.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Aang_rig_v010:pyruqdushkrs
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd aang_correct_Group2SG_Base_Color2.png
+Ni 1.00
+newmtl Aang_rig_v010:uehsrrtxqqig
+illum 4
+Kd 0.55 0.13 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Aang_rig_v010:wfwtvakerwgj
+illum 4
+Kd 0.38 0.23 0.08
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Aang_rig_v010:wiiesqjgdgjr
+illum 4
+Kd 0.06 0.03 0.01
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Aang_rig_v010:xsctrscrmbkq
+illum 4
+Kd 0.97 0.62 0.18
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Dude_Rig_V_02:Belt1SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns 1022.00
+newmtl Dude_Rig_V_02:Belt1SG1
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns 1022.00
+newmtl Dude_Rig_V_02:Body_Skin2SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Dude_Body_Color.png
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns -1.00
+newmtl Dude_Rig_V_02:BrowsSG2
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Dude_Hair_Color.png
+Ni 1.00
+Ks 0.10 0.10 0.10
+Ns 220.86
+newmtl Dude_Rig_V_02:Cornea_LtSG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Dude_Eye_Color.png
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns -1.00
+newmtl Dude_Rig_V_02:EyeLashSG
+illum 4
+Kd 0.07 0.03 0.02
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.10 0.10 0.10
+Ns 220.86
+newmtl Dude_Rig_V_02:ShirtSG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Dude_Shirt_Diffuse.png
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns 1022.00
+newmtl Dude_Rig_V_02:Shoes2SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns 1022.00
+newmtl Dude_Rig_V_02:Tongue1SG
+illum 4
+Kd 0.43 0.02 0.02
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.31 0.31 0.31
+Ns 3.66
+newmtl Dude_Rig_V_02:blinn3SG
+illum 4
+Kd 0.06 0.06 0.06
+Ka 0.00 0.00 0.00
+Tf 0.00 0.00 0.00
+Ni 1.00
+Ks 0.96 0.96 0.96
+newmtl Dude_Rig_V_02:lambert4SG
+illum 4
+Kd 1.00 0.69 0.69
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Dude_Rig_V_02:lambert4SG1
+illum 4
+Kd 1.00 0.69 0.69
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Dude_Rig_V_02:lambert5SG
+illum 4
+Kd 1.00 1.00 1.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Dude_Rig_V_02:lambert5SG1
+illum 4
+Kd 1.00 1.00 1.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl Dude_Rig_V_02:pant1SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Dude_Pants_Diffuse.png
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns 1022.00
+newmtl blinn1SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd futbal.jpg
+bump  -bm 1 NormalMap_(9).png
+Ni 1.00
+Ks 0.18 0.18 0.18
+newmtl blinn2SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Marble_Blue_004_basecolor.jpg
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl blinn3SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.12 0.12 0.12
+Tf 1.00 1.00 1.00
+map_Kd Tiles_Triangles_001_basecolor.jpg
+bump  -bm 1 Tiles_Triangles_001_normal.jpg
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl blinn4SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Tiles_Hexagons_002_basecolor.jpg
+bump  -bm 1 Tiles_Hexagons_002_normal.jpg
+Ni 1.00
+Ks 0.42 0.42 0.42
+newmtl blinn6SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd pingpong.png
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl blinn7SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Wood_Herringbone_Tiles_003_basecolor.jpg
+bump  -bm 1 Wood_Herringbone_Tiles_003_normal.jpg
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl blinn8SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Stylized_Wood_Planks_001_basecolor.jpg
+bump  -bm 1 Stylized_Wood_Planks_001_normal.jpg
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl blinn9SG
+illum 4
+Kd 1.00 1.00 1.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl blinn10SG
+illum 4
+Kd 0.01 0.01 0.01
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl blinn11SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Tiles_028_basecolor.jpg
+bump  -bm 1 Tiles_028_normal.jpg
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl blinn12SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Stylized_Lava_Rocks_001_basecolor.jpg
+bump  -bm 1 Stylized_Lava_Rocks_001_normal.jpg
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl blinn13SG
+illum 4
+Kd 0.29 0.01 0.02
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl blinn14SG
+illum 4
+Kd 0.02 0.02 0.02
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl initialShadingGroup
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl lambert2SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd ball.jpg
+Ni 1.00
+newmtl lambert5SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Stylized_Cliff_Rock_003_basecolor.jpg
+bump  -bm 1 Stylized_Cliff_Rock_003_normal.jpg
+Ni 1.00
